@@ -234,7 +234,7 @@ installChaincode1 () {
 	PEER=$1
 	ORG=$2
 	setGlobals $PEER $ORG
-	peer chaincode install -n mycc -v 1.0 -p github.com/hyperledger/fabric/examples/chaincode/go/example02/cmd >&log.txt
+	peer chaincode install -n mycc1 -v 1.0 -p github.com/hyperledger/fabric/examples/chaincode/go/example02/cmd >&log.txt
 	res=$?
 	cat log.txt
 	verifyResult $res "Chaincode installation on peer peer${PEER}.org${ORG} has Failed"
@@ -246,7 +246,7 @@ installChaincode2 () {
 	PEER=$1
 	ORG=$2
 	setGlobals $PEER $ORG
-	peer chaincode install -n mycc -v 1.0 -p github.com/hyperledger/fabric/examples/chaincode/go/example02/cmd >&log.txt
+	peer chaincode install -n mycc2 -v 1.0 -p github.com/hyperledger/fabric/examples/chaincode/go/example06 >&log.txt
 	res=$?
 	cat log.txt
 	verifyResult $res "Chaincode installation on peer peer${PEER}.org${ORG} has Failed"
@@ -258,13 +258,20 @@ instantiateChaincode () {
 	PEER=$1
 	ORG=$2
 	CHANNEL_NAME=$3
+	if [ "$CHANNEL_NAME" = "channel1" ]; then
+		polics="AND ('Org1MSP.peer','Org3MSP.peer')"
+		chaincodeName="mycc1"
+	else	
+		polics="AND ('Org2MSP.peer','Org3MSP.peer')"
+		chaincodeName="mycc2"
+	fi
 	setGlobals $PEER $ORG
 	# while 'peer chaincode' command can get the orderer endpoint from the peer (if join was successful),
 	# lets supply it directly as we know it using the "-o" option
 	if [ -z "$CORE_PEER_TLS_ENABLED" -o "$CORE_PEER_TLS_ENABLED" = "false" ]; then
-		peer chaincode instantiate -o orderer.example.com:7050 -C $CHANNEL_NAME -n mycc -v 1.0 -c '{"Args":["init","a","100","b","200"]}' -P "AND ('Org1MSP.peer','Org2MSP.peer')" >&log.txt
+		peer chaincode instantiate -o orderer.example.com:7050 -C $CHANNEL_NAME -n $chaincodeName -v 1.0 -c '{"Args":["init","a","100","b","200"]}' -P "$polics" >&log.txt
 	else
-		peer chaincode instantiate -o orderer.example.com:7050 --tls --cafile $ORDERER_CA -C $CHANNEL_NAME -n mycc -v 1.0 -c '{"Args":["init","a","100","b","200"]}' -P "AND ('Org1MSP.peer','Org2MSP.peer')" >&log.txt
+		peer chaincode instantiate -o orderer.example.com:7050 --tls --cafile $ORDERER_CA -C $CHANNEL_NAME -n $chaincodeName -v 1.0 -c '{"Args":["init","a","100","b","200"]}' -P "$polics" >&log.txt
 	fi
 	res=$?
 	cat log.txt
@@ -273,7 +280,47 @@ instantiateChaincode () {
 	echo
 }
 
-chaincodeQuery () {
+# chaincodeQuery () {
+# 	PEER=$1
+# 	ORG=$2
+# 	setGlobals $PEER $ORG
+# 	EXPECTED_RESULT=$3
+# 	local rc=1
+# 	local starttime=$(date +%s)
+# 	if [ $ORG -eq 1 ]; then
+# 		CHANNEL_NAME="channel1"
+# 		chaincodeName="mycc1"
+# 		args="'{"Args":["query","a"]}'"
+# 	else	
+# 		CHANNEL_NAME="channel2"
+# 		chaincodeName="mycc2"
+# 		args="'{"Args":["queryByInvoke","a","mycc1"]}'"
+# 	fi
+# 	echo "===================== Querying on peer${PEER}.org${ORG} on channel '$CHANNEL_NAME'... ===================== "
+# 	# continue to poll
+# 	# we either get a successful response, or reach TIMEOUT
+# 	while test "$(($(date +%s)-starttime))" -lt "$TIMEOUT" -a $rc -ne 0
+# 	do
+#         	sleep 3
+#         	echo "Attempting to Query peer${PEER}.org${ORG} ...$(($(date +%s)-starttime)) secs"
+#         	peer chaincode query -C $CHANNEL_NAME -n $chaincodeName -c $args >&log.txt
+#         	test $? -eq 0 && VALUE=$(c at log.txt | egrep '^[0-9]+$')
+#         	test "$VALUE" = "$EXPECTED_RESULT" && let rc=0
+# 	done
+# 	echo
+# 	cat log.txt
+# 	if test $rc -eq 0 ; then
+# 		echo "===================== Query successful on peer${PEER}.org${ORG} on channel '$CHANNEL_NAME' ===================== "
+#     	else
+# 		echo "!!!!!!!!!!!!!!! Query result on peer${PEER}.org${ORG} is INVALID !!!!!!!!!!!!!!!!"
+#         	echo "================== ERROR !!! FAILED to execute End-2-End Scenario =================="
+# 		echo
+# 		exit 1
+#     	fi
+# }
+
+
+chaincodeQuery1 () {
 	PEER=$1
 	ORG=$2
 	setGlobals $PEER $ORG
@@ -288,7 +335,7 @@ chaincodeQuery () {
 	do
         	sleep 3
         	echo "Attempting to Query peer${PEER}.org${ORG} ...$(($(date +%s)-starttime)) secs"
-        	peer chaincode query -C $CHANNEL_NAME -n mycc -c '{"Args":["query","a"]}' >&log.txt
+        	peer chaincode query -C "channel1" -n mycc1 -c '{"Args":["query","a"]}' >&log.txt
         	test $? -eq 0 && VALUE=$(cat log.txt | egrep '^[0-9]+$')
         	test "$VALUE" = "$EXPECTED_RESULT" && let rc=0
 	done
@@ -304,6 +351,36 @@ chaincodeQuery () {
     	fi
 }
 
+chaincodeQuery2 () {
+	PEER=$1
+	ORG=$2
+	setGlobals $PEER $ORG
+	EXPECTED_RESULT=$3
+	echo "===================== Querying on peer${PEER}.org${ORG} on channel '$CHANNEL_NAME'... ===================== "
+	local rc=1
+	local starttime=$(date +%s)
+
+	# continue to poll
+	# we either get a successful response, or reach TIMEOUT
+	while test "$(($(date +%s)-starttime))" -lt "$TIMEOUT" -a $rc -ne 0
+	do
+        	sleep 3
+        	echo "Attempting to Query peer${PEER}.org${ORG} ...$(($(date +%s)-starttime)) secs"
+        	peer chaincode query -C "channel2" -n mycc2 -c '{"Args":["queryByInvoke","a","mycc1"]}' >&log.txt
+        	test $? -eq 0 && VALUE=$(cat log.txt | egrep '^[0-9]+$')
+        	test "$VALUE" = "$EXPECTED_RESULT" && let rc=0
+	done
+	echo
+	cat log.txt
+	if test $rc -eq 0 ; then
+		echo "===================== Query successful on peer${PEER}.org${ORG} on channel '$CHANNEL_NAME' ===================== "
+    	else
+		echo "!!!!!!!!!!!!!!! Query result on peer${PEER}.org${ORG} is INVALID !!!!!!!!!!!!!!!!"
+        	echo "================== ERROR !!! FAILED to execute End-2-End Scenario =================="
+		echo
+		exit 1
+    	fi
+}
 # parsePeerConnectionParameters $@
 # Helper function that takes the parameters from a chaincode operation
 # (e.g. invoke, query, instantiate) and checks for an even number of
@@ -386,16 +463,16 @@ echo "Install chaincode2 on peer0.org3..."
 installChaincode2 0 3
 
 
-# # Instantiate chaincode on peer0.org2
+# # Instantiate chaincode on peer0.org1,peer0.org2
 echo "Instantiating chaincode1 on peer0.org1..."
 instantiateChaincode 0 1 channel1 
 echo "Instantiating chaincode2 on peer0.org2..."
 instantiateChaincode 0 2 channel2 
 
-# # Query on chaincode on peer0.org1
-# echo "Querying chaincode on peer0.org1..."
-# chaincodeQuery 0 1 100
-
+# Query on chaincode on peer0.org1
+echo "Querying chaincode on peer0.org1..."
+chaincodeQuery1 0 1 100
+chaincodeQuery2 0 2 100
 # # Invoke on chaincode on peer0.org1 and peer0.org2
 # echo "Sending invoke transaction on peer0.org1 and peer0.org2..."
 # chaincodeInvoke 0 1 0 2
