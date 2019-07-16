@@ -110,7 +110,10 @@ Organizations:
         # ID to load the MSP definition as
         ID: Org3MSP
 
-        MSPDir: crypto-config/peerOrganizations/org3.example.com/msp
+        # Type of MSP - this org uses idemix for its MSP implementation
+        MSPType: idemix
+
+        MSPDir: crypto-config/idemix/idemix-config
 
         # Policies defines the set of policies at this level of the config tree
         # For organization policies, their canonical path is usually
@@ -354,18 +357,21 @@ Profiles:
                 Organizations:
                     - *Org1
                     - *Org2
-                    - *Org3
+                    #- *Org3
     TwoOrgsChannel1:
         Consortium: SampleConsortium
         Application:
             <<: *ApplicationDefaults
             Organizations:
                 - *Org1
-                - *Org3
+                #- *Org2
+                #- *Org3
+
     TwoOrgsChannel2:
         Consortium: SampleConsortium
         Application:
             <<: *ApplicationDefaults
             Organizations:
+                #- *Org1
                 - *Org2
-                - *Org3
+                #- *Org3
