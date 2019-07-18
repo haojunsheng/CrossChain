@@ -22,13 +22,17 @@ CrossChain in fabric
 简单描述下：Org1中的peer1和ORG3中的peer3加入channel1,并且安装Chaincode1,Org2中的peer2 和ORG3中的peer3加入channel2,并且安装Chaincode2。
 peer3这个节点是可以跨链的关键所在，因为该节点同时拥有两个通道的数据。
 
-事情到这里，并没有完，上面的操作不是一个原子操作，所以我们必须要考虑事务性，如果中间步骤出错，我们要将整个过程进行回滚，并且这是在分布式的环境下完成的，哎，真的让人头大。
-
 先整个简易版的跨链流程：
 1. Chaincode1：UserA向UserPub转移10元钱，UserPub把这笔钱标记为已锁定:
 2. Chaincode2：通过invokeChaincode查询UserPub是否已经锁定该笔钱。未锁定，则终止该次跨链，并把资产转回UserA。否则执行3
 3. Chaincode2：UserPub向UserB转移10元钱，同时UserPub把这笔钱标记为已转移（注：该笔钱不可退回UserA。）
 4. 跨链完成
+
+
+
+事情到这里，并没有完，上面的操作不是一个原子操作，所以我们必须要考虑事务性，如果中间步骤出错，我们要将整个过程进行回滚，并且这是在分布式的环境下完成的，哎，真的让人头大。
+
+
 
 * * *
 工欲善其事必先利其器，下面我们来搭建跨链所需的环境
@@ -156,20 +160,19 @@ f := "query"
 
 我们成功的跨越通道查到了所需的数据。但是事情真的这么完美吗？如果两个通道没有公共的物理节点还可以吗？我们再来测试下，这次我们的网络是channel1中有peer1,channel2中有peer2，二者没有共同节点，我们再次在channel2中InvokeChaincode Channel1中的代码，废话不再多说，我们直接来看调用的结果：
 
+![](https://img2018.cnblogs.com/blog/1358741/201907/1358741-20190718165539374-925113908.png)
+
 
 **综上：结论是不同的通道可以query,但前提必须是有共同的物理节点。**
 
 ## 2.3 深入了解
-下面的内容不是必须看的，我们来深入进去看看invokeChaincode到底是如何实现的。我们现在fabric的根目录下使用grep工具来看看都有哪里使用了invokeChaincode。
-`grep -r -n "invokeChaincode" >>grep.txt`
+下面的内容不是必须看的，我们来深入进去看看invokeChaincode到底是如何实现的。我们发现上面的代码引用了fabric/core/chaincode/shim/interfaces.go中的ChaincodeStubInterface接口的`InvokeChaincode(chaincodeName string, args [][]byte, channel string) pb.Response`
 
-然后我们发现，相关的内容集中在
-
-
+该接口的实现在其同目录下的Chaincode.go文件中，我们看其代码：
 
 ```go
-// InvokeChaincode documentation can be found in 
-interfaces.gofunc (stub *ChaincodeStub) InvokeChaincode(chaincodeName string, args [][]byte, channel string) pb.Response {   
+// InvokeChaincode documentation can be found in interfaces.go
+func (stub *ChaincodeStub) InvokeChaincode(chaincodeName string, args [][]byte, channel string) pb.Response {   
 // Internally we handle chaincode name as a composite name    
 if channel != "" {          
     chaincodeName = chaincodeName + "/" + channel    
@@ -177,7 +180,7 @@ if channel != "" {
 return stub.handler.handleInvokeChaincode(chaincodeName, args, stub.ChannelId, stub.TxID)}
 ```
 
-
+该方法把chaincodeName和channel进行了拼接，同时传入了ChannelId和TxID，二者是Orderer节点发送来的。然后调用了handleInvokeChaincode，我们在来看handleInvokeChaincode。在同目录下的handler.go文件中。
 
 ```go
 / handleInvokeChaincode communicates with the peer to invoke another chaincode.
@@ -239,6 +242,20 @@ func (handler *Handler) handleInvokeChaincode(chaincodeName string, args [][]byt
 }
 ```
 
+我们来说下上面的步骤：
+
+1. 序列化查询参数
+2. 使用channelId+ txid创建了一个txCtxID通道（这里的通道指的是go里的通道，用于消息的发送和接收，不是fabric里的，不要混淆。）
+3. 构造INVOKE_CHAINCODE类型的消息
+4. sendReceive(msg *pb.ChaincodeMessage, c chan pb.ChaincodeMessage) 通过grpc发送invokeChaincode（包括查询参数，channelID和交易ID）消息直到响应正确的消息。
+   1. serialSendAsync(msg, errc)
+   2.  serialSend(msg *pb.ChaincodeMessage)
+
+5. 处理响应，如果接收到ChaincodeMessage_RESPONSE和ChaincodeMessage_COMPLETED类型的消息，说明InvokeChaincode成功，否则失败。
+6. 删除txCtxID
+
+总结：InvokeChaincode本质上是构造了一个txCtxID，然后向orderer节点发送消息，最后把消息写入txCtxID，返回即可。
+
 
 
 # 3. 跨链的实现
@@ -251,15 +268,42 @@ func (handler *Handler) handleInvokeChaincode(chaincodeName string, args [][]byt
 
 其本质是通过一个公用账户来做到的，通过invokeChaincode来保证金额确实被锁定的。这里面其实是有很大的问题，我们需要侵入别人的代码，这里就很烦，很不友好。
 
+下面我们来看看其实现：
 
-# 4. 可商用的跨链方案
+Chaincode1：
+
+在初始化函数中，我们定义了两个用户A和UserPub，以及userPubStatus。
+
+![](https://img2018.cnblogs.com/blog/1358741/201907/1358741-20190718155911766-685561864.png)
+
+然后我们调用Chaincode1从A向UserPub转10元钱，同时把userPubStatus置位0。
+
+然后我们在Chaincode2调用invokeChaincode查询UserPub是否已经锁定该笔钱，即若userPubStatus为0，则已锁定。
+
+然后在Chaincode2中从UserPub向UserB（UserB原来有200元钱）转10元钱。同时在Chaincode1中把UserPub设置为1。
+
+下面是UserB转账前和转账后的余额：
+
+![](https://img2018.cnblogs.com/blog/1358741/201907/1358741-20190718165315286-241314565.png)
+
+![1563440015455](C:\Users\HAOJUNSHENG\AppData\Roaming\Typora\typora-user-images\1563440015455.png)
 
 
-# 3. 总结
+
+# 4. 总结
 
 
 在这次方案的研究中，还是踩了很多的坑的，现总结如下：
 1. 对待一个陌生的东西，一定要先看官方文档，然后写个简单的demo进行验证。不要急着先干活。根据验证的结果在决定下面怎么办？
-2. 要学会思考，就比如说这次，其实很简单的道理，channel是为了保护数据的，不需要被调用 方做任何验证的情况下，怎么可能获取到数据呢？
 
 跨链在实际的业务中还是需要的，虽然无法通过chaincode来实现，但是还是要想其他办法的。
+
+跨链的实现是很复杂的，中间人这个方案需要很多的前置条件的，现在列出来：
+
+|            跨链前提            | 原因                             |
+| :----------------------------: | -------------------------------- |
+| 两条链需要有一个共同的物理节点 | 有相同的物理节点才可以查询到数据 |
+|       需要有一个中间账户       | 中间账户保证不会出现双花问题     |
+|  中间账户必须是相同的CA签发的  | 相同CA可以保证同一个用户         |
+|     必须侵入跨链双方的链码     | 转账的逻辑是在双方链码实现的     |
+|       双方认可的转账流程       | 保证                             |
