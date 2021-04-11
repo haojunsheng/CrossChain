@@ -20,7 +20,17 @@
 # CrossChain
 CrossChain in fabric
 
+# How to use
+```
+https://github.com/haojunsheng/CrossChain
+cd e2e_cli_crosschain
+./byfn up
+```
+
+注意：镜像和二进制工具需要提前准备好，且需要把二进制工具放在CrossChain/e2e_cli_crosschain/bin目录下面。
+
 # 前言
+
 今天公司让我整理一个基于fabric的跨链的方案，之前没怎么接触过跨链，在这里记录下自己的思路吧。
 
 首先，先明白几个概念。什么是跨链？我的理解是跨链是跨channel。下面详细说下我的理由：
@@ -60,7 +70,7 @@ peer3这个节点是可以跨链的关键所在，因为该节点同时拥有两
 我的环境规划是：Org1有1个peer节点，Org2有1个peer节点，Org3有1个节点，其中Org1和Org3加入channel1,安装chaincode1,Org2和Org3加入channel2，安装chaincode2。
 
 下面我所改动的文件的详细内容请参考：
-https://github.com/Anapodoton/CrossChain
+https://github.com/haojunsheng/CrossChain
 
 证书的生成我们需要修改如下配置文件：
 crypto-config.yaml
@@ -72,6 +82,7 @@ generateArtifacts.sh
 
 改动完成之后，我们可以使用cryptogen工具生成相应的证书文件，我们使用tree命令进行查看。![](https://img2018.cnblogs.com/blog/1358741/201907/1358741-20190716171428572-2130438913.png)
 
+TDDO:组织和通道的数量进行了固定，后续可以根据用户的需求进行设置。
  ## 1.2 生成创世区块，应用通道配置交易文件和锚节点配置更新交易文件
 我们需要修改configtx.yaml文件和generateArtifacts.sh文件。
 

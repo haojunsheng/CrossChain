@@ -159,3 +159,48 @@ services:
       - 11051:7051
       - 11052:7052
       - 11053:7053
+
+  peer0.org4.example.com:
+    container_name: peer0.org4.example.com
+    extends:
+      file: peer-base.yaml
+      service: peer-base
+    environment:
+      - CORE_PEER_ID=peer0.org4.example.com
+      - CORE_PEER_ADDRESS=peer0.org4.example.com:7051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.org4.example.com:7052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7052
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org4.example.com:7051
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org4.example.com:7051
+      - CORE_PEER_LOCALMSPID=Org4MSP
+    volumes:
+      - /var/run/:/host/var/run/
+      - ../crypto-config/peerOrganizations/org4.example.com/peers/peer0.org4.example.com/msp:/etc/hyperledger/fabric/msp
+      - ../crypto-config/peerOrganizations/org4.example.com/peers/peer0.org4.example.com/tls:/etc/hyperledger/fabric/tls
+    ports:
+      - 12051:7051
+      - 12052:7052
+      - 12053:7053
+
+
+  peer0.org5.example.com:
+    container_name: peer0.org5.example.com
+    extends:
+      file: peer-base.yaml
+      service: peer-base
+    environment:
+      - CORE_PEER_ID=peer0.org5.example.com
+      - CORE_PEER_ADDRESS=peer0.org5.example.com:7051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.org5.example.com:7052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7052
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org5.example.com:7051
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org5.example.com:7051
+      - CORE_PEER_LOCALMSPID=Org5MSP
+    volumes:
+      - /var/run/:/host/var/run/
+      - ../crypto-config/peerOrganizations/org5.example.com/peers/peer0.org5.example.com/msp:/etc/hyperledger/fabric/msp
+      - ../crypto-config/peerOrganizations/org5.example.com/peers/peer0.org5.example.com/tls:/etc/hyperledger/fabric/tls
+    ports:
+      - 13051:7051
+      - 13052:7052
+      - 13053:7053

@@ -133,6 +133,66 @@ Organizations:
             - Host: peer0.org3.example.com
               Port: 7051
 
+    - &Org4
+        # Name of the organization
+        Name: Org4MSP
+
+        # ID to load the MSP definition as
+        ID: Org4MSP
+
+        MSPDir: crypto-config/peerOrganizations/org4.example.com/msp
+
+        # Policies defines the set of policies at this level of the config tree
+        # For organization policies, their canonical path is usually
+        #   /Channel/<Application|Orderer>/<OrgName>/<PolicyName>
+        Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('Org4MSP.admin', 'Org4MSP.peer', 'Org4MSP.client')"
+            Writers:
+                Type: Signature
+                Rule: "OR('Org4MSP.admin', 'Org4MSP.client')"
+            Admins:
+                Type: Signature
+                Rule: "OR('Org4MSP.admin')"
+
+        AnchorPeers:
+            # AnchorPeers defines the location of peers which can be used
+            # for cross org gossip communication.  Note, this value is only
+            # encoded in the genesis block in the Application section context
+            - Host: peer0.org4.example.com
+              Port: 7051
+
+    - &Org5
+        # Name of the organization
+        Name: Org5MSP
+
+        # ID to load the MSP definition as
+        ID: Org5MSP
+
+        MSPDir: crypto-config/peerOrganizations/org5.example.com/msp
+
+        # Policies defines the set of policies at this level of the config tree
+        # For organization policies, their canonical path is usually
+        #   /Channel/<Application|Orderer>/<OrgName>/<PolicyName>
+        Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('Org5MSP.admin', 'Org5MSP.peer', 'Org5MSP.client')"
+            Writers:
+                Type: Signature
+                Rule: "OR('Org5MSP.admin', 'Org5MSP.client')"
+            Admins:
+                Type: Signature
+                Rule: "OR('Org5MSP.admin')"
+
+        AnchorPeers:
+            # AnchorPeers defines the location of peers which can be used
+            # for cross org gossip communication.  Note, this value is only
+            # encoded in the genesis block in the Application section context
+            - Host: peer0.org5.example.com
+              Port: 7051
+
 ################################################################################
 #
 #   SECTION: Capabilities
@@ -355,20 +415,80 @@ Profiles: # 模板定义了Orderer系统通道和应用通道配置信息
                     - *Org1
                     - *Org2
                     - *Org3
+                    - *Org4
     TwoOrgsChannel1:
         Consortium: SampleConsortium
         Application:
             <<: *ApplicationDefaults
             Organizations:
                 - *Org1
-                #- *Org2
-                - *Org3
+                - *Org2
 
     TwoOrgsChannel2:
         Consortium: SampleConsortium
         Application:
             <<: *ApplicationDefaults
             Organizations:
-                #- *Org1
+                - *Org1
+                - *Org3
+    TwoOrgsChannel3:
+        Consortium: SampleConsortium
+        Application:
+            <<: *ApplicationDefaults
+            Organizations:
+                - *Org1
+                - *Org4
+    TwoOrgsChannel4:
+        Consortium: SampleConsortium
+        Application:
+            <<: *ApplicationDefaults
+            Organizations:
                 - *Org2
                 - *Org3
+    TwoOrgsChannel5:
+        Consortium: SampleConsortium
+        Application:
+            <<: *ApplicationDefaults
+            Organizations:
+                - *Org2
+                - *Org4
+    TwoOrgsChannel6:
+        Consortium: SampleConsortium
+        Application:
+            <<: *ApplicationDefaults
+            Organizations:
+                - *Org3
+                - *Org4
+    TwoOrgsChannel7:
+        Consortium: SampleConsortium
+        Application:
+            <<: *ApplicationDefaults
+            Organizations:
+                - *Org1
+                - *Org2
+                - *Org3
+    TwoOrgsChannel8:
+        Consortium: SampleConsortium
+        Application:
+            <<: *ApplicationDefaults
+            Organizations:
+                - *Org1
+                - *Org2
+                - *Org4
+    TwoOrgsChannel9:
+        Consortium: SampleConsortium
+        Application:
+            <<: *ApplicationDefaults
+            Organizations:
+                - *Org2
+                - *Org3
+                - *Org4
+    TwoOrgsChannel10:
+        Consortium: SampleConsortium
+        Application:
+            <<: *ApplicationDefaults
+            Organizations:
+                - *Org1
+                - *Org2
+                - *Org3
+                - *Org4

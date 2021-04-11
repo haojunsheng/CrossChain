@@ -15,7 +15,6 @@ IF_COUCHDB="$4"
 
 COMPOSE_FILE=docker-compose-cli.yaml
 COMPOSE_FILE_COUCH=docker-compose-couch.yaml
-#COMPOSE_FILE=docker-compose-e2e.yaml
 
 function printHelp () {
 	echo "Usage: ./network_setup <up|down> <\$channel-name> <\$cli_timeout> <couchdb>.\nThe arguments must be in order."
@@ -29,7 +28,7 @@ function validateArgs () {
 	fi
 	if [ -z "${CH_NAME}" ]; then
 		echo "setting to default channel 'mychannel'"
-		CH_NAME=mychannel
+		CH_NAME=mychannel1
 	fi
 }
 
@@ -57,7 +56,7 @@ function networkUp () {
     else
       #Generate all the artifacts that includes org certs, orderer genesis block,
       # channel configuration transaction
-      source generateArtifacts.sh $CH_NAME
+      source generateArtifacts.sh
     fi
 
     if [ "${IF_COUCHDB}" == "couchdb" ]; then

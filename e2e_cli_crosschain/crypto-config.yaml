@@ -107,3 +107,59 @@ PeerOrgs:
       Count: 1
     Users:
       Count: 0
+  # ---------------------------------------------------------------------------
+  # Org4
+  # ---------------------------------------------------------------------------
+  - Name: Org4
+    Domain: org4.example.com
+    EnableNodeOUs: true
+    CA:
+      Country: US
+      Province: California
+      Locality: San Francisco
+    Template:
+      Count: 1
+    Users:
+      Count: 0
+  # ---------------------------------------------------------------------------
+  # Org5
+  # ---------------------------------------------------------------------------
+  - Name: Org5
+    Domain: org5.example.com
+    EnableNodeOUs: true
+    CA:
+      Country: US
+      Province: California
+      Locality: San Francisco
+    Template:
+      Count: 1
+    Users:
+      Count: 0
+  # ---------------------------------------------------------------------------
+  # Org6
+  # ---------------------------------------------------------------------------
+  - Name: Org6
+    Domain: org6.example.com
+    EnableNodeOUs: true
+    CA:
+      Country: US
+      Province: California
+      Locality: San Francisco
+    Template:
+      Count: 1
+    Users:
+      Count: 0
+  # ---------------------------------------------------------------------------
+  # Org7
+  # ---------------------------------------------------------------------------
+  - Name: Org7
+    Domain: org7.example.com
+    EnableNodeOUs: true
+    CA:
+      Country: US
+      Province: California
+      Locality: San Francisco
+    Template:
+      Count: 1
+    Users:
+      Count: 0

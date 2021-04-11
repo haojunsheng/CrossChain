@@ -12,9 +12,9 @@ echo "|____/    |_|   /_/   \_\ |_| \_\   |_|           |_____| |_____| |_____|"
 echo
 
 CHANNEL_NAME1="$1"
-: ${CHANNEL_NAME1:="mychannel"}
+: ${CHANNEL_NAME1:="mychannel1"}
 : ${TIMEOUT:="60"}
-CHANNEL_NAME2="yourchannel"
+CHANNEL_NAME2="mychannel2"
 COUNTER=1
 MAX_RETRY=5
 ORDERER_CA=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
@@ -302,26 +302,26 @@ checkOSNAvailability
 # Create channel
 echo "Creating channel..."
 createChannel 0 1 $CHANNEL_NAME1
-createChannel 0 2 $CHANNEL_NAME2
+#createChannel 0 2 $CHANNEL_NAME2
 
 # Join all the peers to the channel
 echo "Having all peers join the channel..."
 joinChannel 0 1 $CHANNEL_NAME1
 joinChannel 1 1 $CHANNEL_NAME1
-joinChannel 0 2 $CHANNEL_NAME2
-joinChannel 1 2 $CHANNEL_NAME2
-joinChannel 0 3 $CHANNEL_NAME1
-joinChannel 0 3 $CHANNEL_NAME2
+#joinChannel 0 2 $CHANNEL_NAME2
+#joinChannel 1 2 $CHANNEL_NAME2
+#joinChannel 0 3 $CHANNEL_NAME1
+#joinChannel 0 3 $CHANNEL_NAME2
 
 # Set the anchor peers for each org in the channel
 echo "Updating anchor peers for org1..."
 updateAnchorPeers 0 1 $CHANNEL_NAME1 "anchors"
-echo "Updating anchor peers for org2..."
+#echo "Updating anchor peers for org2..."
 updateAnchorPeers 0 2 $CHANNEL_NAME2 "anchors"
 echo "Updating anchor peers for org3..."
 updateAnchorPeers 0 3 $CHANNEL_NAME1 "anchors1"
 echo "Updating anchor peers for org3..."
-updateAnchorPeers 0 3 $CHANNEL_NAME2 "anchors2"
+#updateAnchorPeers 0 3 $CHANNEL_NAME2 "anchors2"
 
 # Install chaincode on peer0.org1 and peer2.org2
 echo "Installing chaincode on peer0.org1..."
