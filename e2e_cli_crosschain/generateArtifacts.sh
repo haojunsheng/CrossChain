@@ -10,7 +10,7 @@ CHANNEL_NAME7="mychannel7"
 CHANNEL_NAME8="mychannel8"
 CHANNEL_NAME9="mychannel9"
 CHANNEL_NAME10="mychannel10"
-CHANNEL_NAME=("mychannel1" "mychannel2" "mychannel3" "mychannel4" "mychannel5" "mychannel6" "mychannel7" "mychannel8" "mychanne9" "mychannel10")
+CHANNEL_NAME=("mychannel1" "mychannel2" "mychannel3" "mychannel4" "mychannel5" "mychannel6" "mychannel7" "mychannel8" "mychannel9" "mychannel10")
 export FABRIC_ROOT=$PWD/bin/
 export FABRIC_CFG_PATH=$PWD
 echo
@@ -73,7 +73,9 @@ function replacePrivateKey() {
 function generateChannelArtifacts() {
 
 	CONFIGTXGEN=$FABRIC_ROOT/configtxgen
-
+  if [ ! -d "channel-artifacts" ]; then
+    mkdir "channel-artifacts"
+  fi
 	echo "##########################################################"
 	echo "#########  Generating Orderer Genesis block ##############"
 	echo "##########################################################"
@@ -97,15 +99,11 @@ function generateChannelArtifacts() {
 	echo "#######    Generating anchor peer update for Org1MSP   ##########"
 	echo "#################################################################"
 	$CONFIGTXGEN -profile TwoOrgsChannel1 -outputAnchorPeersUpdate ./channel-artifacts/Org1MSPanchors.tx -channelID $CHANNEL_NAME1 -asOrg Org1MSP
-	$CONFIGTXGEN -profile TwoOrgsChannel1 -outputAnchorPeersUpdate ./channel-artifacts/Org3MSPanchors1.tx -channelID $CHANNEL_NAME1 -asOrg Org3MSP
-#
-#	echo
-#	echo "#################################################################"
-#	echo "#######    Generating anchor peer update for Org2MSP   ##########"
-#	echo "#################################################################"
-#	$CONFIGTXGEN -profile TwoOrgsChannel2 -outputAnchorPeersUpdate ./channel-artifacts/Org2MSPanchors.tx -channelID $CHANNEL_NAME2 -asOrg Org2MSP
-#	$CONFIGTXGEN -profile TwoOrgsChannel2 -outputAnchorPeersUpdate ./channel-artifacts/Org3MSPanchors2.tx -channelID $CHANNEL_NAME2 -asOrg Org3MSP
-#	echo
+	$CONFIGTXGEN -profile TwoOrgsChannel1 -outputAnchorPeersUpdate ./channel-artifacts/Org2MSPanchors.tx -channelID $CHANNEL_NAME1 -asOrg Org2MSP
+
+	$CONFIGTXGEN -profile TwoOrgsChannel2 -outputAnchorPeersUpdate ./channel-artifacts/Org1MSPanchors1.tx -channelID $CHANNEL_NAME2 -asOrg Org1MSP
+	$CONFIGTXGEN -profile TwoOrgsChannel2 -outputAnchorPeersUpdate ./channel-artifacts/Org3MSPanchors.tx -channelID $CHANNEL_NAME2 -asOrg Org3MSP
+	echo
 }
 
 generateCerts

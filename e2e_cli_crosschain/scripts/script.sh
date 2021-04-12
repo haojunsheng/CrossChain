@@ -1,8 +1,5 @@
 #!/bin/bash
-# Copyright London Stock Exchange Group All Rights Reserved.
-#
-# SPDX-License-Identifier: Apache-2.0
-#
+
 echo
 echo " ____    _____      _      ____    _____           _____   ____    _____ "
 echo "/ ___|  |_   _|    / \    |  _ \  |_   _|         | ____| |___ \  | ____|"
@@ -15,6 +12,14 @@ CHANNEL_NAME1="$1"
 : ${CHANNEL_NAME1:="mychannel1"}
 : ${TIMEOUT:="60"}
 CHANNEL_NAME2="mychannel2"
+CHANNEL_NAME3="mychannel3"
+CHANNEL_NAME4="mychannel4"
+CHANNEL_NAME5="mychannel5"
+CHANNEL_NAME6="mychannel6"
+CHANNEL_NAME7="mychannel7"
+CHANNEL_NAME8="mychannel8"
+CHANNEL_NAME9="mychannel9"
+CHANNEL_NAME10="mychannel10"
 COUNTER=1
 MAX_RETRY=5
 ORDERER_CA=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
@@ -301,45 +306,61 @@ checkOSNAvailability
 
 # Create channel
 echo "Creating channel..."
+# PEER,ORG,CHANNEL
 createChannel 0 1 $CHANNEL_NAME1
-#createChannel 0 2 $CHANNEL_NAME2
+createChannel 0 1 $CHANNEL_NAME2
+createChannel 0 1 $CHANNEL_NAME3
+createChannel 0 2 $CHANNEL_NAME4
+createChannel 0 2 $CHANNEL_NAME5
+createChannel 0 3 $CHANNEL_NAME6
+createChannel 0 1 $CHANNEL_NAME7
+createChannel 0 1 $CHANNEL_NAME8
+createChannel 0 2 $CHANNEL_NAME9
+createChannel 0 1 $CHANNEL_NAME10
 
 # Join all the peers to the channel
 echo "Having all peers join the channel..."
 joinChannel 0 1 $CHANNEL_NAME1
-joinChannel 1 1 $CHANNEL_NAME1
-#joinChannel 0 2 $CHANNEL_NAME2
-#joinChannel 1 2 $CHANNEL_NAME2
-#joinChannel 0 3 $CHANNEL_NAME1
-#joinChannel 0 3 $CHANNEL_NAME2
+joinChannel 0 2 $CHANNEL_NAME2
+joinChannel 1 2 $CHANNEL_NAME2
+joinChannel 0 3 $CHANNEL_NAME1
+joinChannel 0 3 $CHANNEL_NAME2
+joinChannel 0 1 $CHANNEL_NAME3
+joinChannel 0 2 $CHANNEL_NAME4
+joinChannel 0 2 $CHANNEL_NAME5
+joinChannel 0 3 $CHANNEL_NAME6
+joinChannel 0 1 $CHANNEL_NAME7
+joinChannel 0 1 $CHANNEL_NAME8
+joinChannel 0 2 $CHANNEL_NAME9
+joinChannel 0 1 $CHANNEL_NAME10
 
 # Set the anchor peers for each org in the channel
 echo "Updating anchor peers for org1..."
 updateAnchorPeers 0 1 $CHANNEL_NAME1 "anchors"
 #echo "Updating anchor peers for org2..."
-updateAnchorPeers 0 2 $CHANNEL_NAME2 "anchors"
+updateAnchorPeers 0 2 $CHANNEL_NAME1 "anchors"
+echo "Updating anchor peers for org1..."
+updateAnchorPeers 0 1 $CHANNEL_NAME2 "anchors1"
 echo "Updating anchor peers for org3..."
-updateAnchorPeers 0 3 $CHANNEL_NAME1 "anchors1"
-echo "Updating anchor peers for org3..."
-#updateAnchorPeers 0 3 $CHANNEL_NAME2 "anchors2"
+updateAnchorPeers 0 3 $CHANNEL_NAME2 "anchors"
 
 # Install chaincode on peer0.org1 and peer2.org2
 echo "Installing chaincode on peer0.org1..."
 installChaincode1 0 1
-echo "Installing chaincode on peer0.org3..."
-installChaincode1 0 3
+echo "Installing chaincode on peer0.org2..."
+installChaincode1 0 2
+echo "Install chaincode on peer0.org1..."
+installChaincode2 0 1
 echo "Install chaincode on peer0.org2..."
-installChaincode2 0 2
-echo "Install chaincode on peer0.org3..."
 installChaincode2 0 3
 
 # Instantiate chaincode on peer0.org1
 echo "Instantiating chaincode on peer0.org1..."
-instantiateChaincode 0 1 $CHANNEL_NAME1 "mycc" "OR('Org1MSP.peer','Org3MSP.peer')" '{"Args":["init","a","100","public","200"]}'
+instantiateChaincode 0 1 $CHANNEL_NAME1 "mycc" "OR('Org1MSP.peer','Org2MSP.peer')" '{"Args":["init","a","100","public","200"]}'
 echo "Instantiating chaincode on peer0.org2..."
-instantiateChaincode 0 2 $CHANNEL_NAME2 "yourcc" "OR('Org2MSP.peer','Org3MSP.peer')" '{"Args":["init","sum","0"]}'
+instantiateChaincode 0 3 $CHANNEL_NAME2 "yourcc" "OR('Org1MSP.peer','Org3MSP.peer')" '{"Args":["init","sum","0"]}'
 
-Invoke on chaincode on peer0.org1
+# Invoke on chaincode on peer0.org1
 echo "Sending invoke transaction on peer0.org3..."
 chaincodeInvoke 0 1
 
